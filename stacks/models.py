@@ -15,8 +15,8 @@ class Stacks(models.Model):
     source = models.TextField()
 
     # 爬虫抓取数据，存入数据库
-    def creatStacks(self):
-        url = "http://www.quanshuwang.com/list/1_2.html"
+    def creatStacks(request, param):
+        url = "http://www.quanshuwang.com/list/1_" + param + ".html"
         webPage = urllib.request.urlopen(url)
         data = webPage.read()
         data = data.decode('GBK')

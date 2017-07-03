@@ -8,5 +8,5 @@ from stacks.models import Stacks
 
 urlpatterns = [
     url(r'^all/(.+)/$', Stacks.stacksAll),
-    url(r'^create/', Stacks.creatStacks),
+    url(r'^create/(.+)/$', Stacks.creatStacks),
 ]
