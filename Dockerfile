@@ -1,4 +1,5 @@
 FROM python:3.5
+FROM django
 
 RUN mkdir -p /Users/renminghe/xiaomingBook
 WORKDIR  /Users/renminghe/xiaomingBook
