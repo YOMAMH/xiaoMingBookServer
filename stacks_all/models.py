@@ -1,6 +1,7 @@
 from django.db import models
 import urllib.request
 import json
+from django.utils import timezone
 
 from django.http import HttpResponse
 
@@ -13,6 +14,10 @@ class Stacks(models.Model):
     title = models.TextField()
     imgUrl = models.TextField()
     source = models.TextField()
+    author = models.TextField()
+    introduce = models.TextField()
+    type = models.TextField()
+    created_date = models.DateTimeField(default = timezone.now)
 
     # 爬虫抓取数据，存入数据库
     def creatStacks(request, param):
@@ -38,6 +43,9 @@ class Stacks(models.Model):
                 'title': k.title,
                 'imgUrl': k.imgUrl,
                 'source': k.source,
+                'author': k.author,
+                'introduce': k.introduce,
+                'type': k.type,
             }
             dataSet.append(dataObj)
         resJson = NetworkTool.resSuccess(dataSet)
@@ -99,7 +107,16 @@ def handle(data):
         imgUrl = listItem[listItem.find('src="') + 5:listItem.find('"', listItem.find('src="') + 5)]
         title = listItem[listItem.find('title="') + 7:listItem.find('"', listItem.find('title="') + 7)]
         source = listItem[listItem.find('href="') + 6:listItem.find('"', listItem.find('href="') + 6)]
+        authorIndex = listItem.find('.php?author=')
+        authorIndex = listItem.find('">', authorIndex)
+        authorIndex1 = listItem.find('</a>', authorIndex)
+        author = listItem[authorIndex + 2:authorIndex1]
+        introduceIndex = listItem.find('<em')
+        introduceIndex = listItem.find('">',introduceIndex)
+        introduceIndex1 = listItem.find('<a',introduceIndex)
+        introduce = listItem[introduceIndex + 2:introduceIndex1]
+
         # imgName = imgUrl[imgUrl.rfind("/") + 1:]
         # save_file('/Users/renminghe/Desktop/python爬虫/images/', imgName, get_file(imgUrl))
-        Stacks.objects.create(title=title, imgUrl=imgUrl, source=source)
-    return data;
+        Stacks.objects.create(title=title, imgUrl=imgUrl, source=source, author=author, introduce=introduce, type="玄幻")
+    return data
