@@ -1,6 +1,7 @@
 from django.db import models
 import urllib.request
 import json
+import re
 from django.utils import timezone
 
 from django.http import HttpResponse
@@ -12,7 +13,6 @@ from tools.networkTool import NetworkTool
 
 class Stacks(models.Model):
     title = models.TextField()
-    imgUrl = models.TextField()
     source = models.TextField()
     author = models.TextField()
     introduce = models.TextField()
@@ -21,27 +21,30 @@ class Stacks(models.Model):
 
     # 爬虫抓取数据，存入数据库
     def creatStacks(request, param):
-        url = "http://www.quanshuwang.com/list/1_" + param + ".html"
+        url = "http://book.zongheng.com/store/c" + param + "/c0/b0/u0/p1/v0/s9/t0/ALL.html"
         webPage = urllib.request.urlopen(url)
         data = webPage.read()
-        data = data.decode('GBK')
-        data = data[data.index('<section'):data.index('</section>')]
-        data = data[data.index('<ul'):data.index('</ul>')]
+        data = data.decode('utf-8')
+        data = data[data.index('<ul class="main_con">') + len('<ul class="main_con">'):data.index('<div class="page">')]
+        data = data[:data.index('</ul>')]
         result = handle(data)
         return HttpResponse(result)
 
-    def stacksAll(request, param):
+    def stacksAll(request, param1, param2):
         index = 0
-        if (param == ''):
+        typeMap = {
+            "1" : "奇幻玄幻",
+        }
+        if (param2 == ''):
             index = 0
         else:
-            index = int(param)* 10
-        resObj = Stacks.objects.all()[index:index + 10]
+            index = int(param2)* 10
+
+        resObj = Stacks.objects.filter(type = typeMap[param1])[index:index + 10]
         dataSet = []
         for v, k in enumerate(resObj):
             dataObj = {
                 'title': k.title,
-                'imgUrl': k.imgUrl,
                 'source': k.source,
                 'author': k.author,
                 'introduce': k.introduce,
@@ -98,25 +101,29 @@ def handle(data):
     dataLen = data.rfind('</li>')
     while lastIndex < dataLen:
         lastIndex = data.find('</li>', lastIndex, len(data))
-        if (lastIndex > 0):
+        if (lastIndex > 0 and data[preIndex:lastIndex].find('<li class="line') < 0):
             list.append(data[preIndex:lastIndex])
         preIndex = lastIndex
         lastIndex += 1
     for i, el in enumerate(list):
         listItem = el
-        imgUrl = listItem[listItem.find('src="') + 5:listItem.find('"', listItem.find('src="') + 5)]
-        title = listItem[listItem.find('title="') + 7:listItem.find('"', listItem.find('title="') + 7)]
-        source = listItem[listItem.find('href="') + 6:listItem.find('"', listItem.find('href="') + 6)]
-        authorIndex = listItem.find('.php?author=')
-        authorIndex = listItem.find('">', authorIndex)
-        authorIndex1 = listItem.find('</a>', authorIndex)
-        author = listItem[authorIndex + 2:authorIndex1]
-        introduceIndex = listItem.find('<em')
-        introduceIndex = listItem.find('">',introduceIndex)
-        introduceIndex1 = listItem.find('<a',introduceIndex)
-        introduce = listItem[introduceIndex + 2:introduceIndex1]
+        title = listItem[listItem.find('<span class="chap">') + len('<span class="chap">'):listItem.find(
+            '<span class="number">')]
+        title = title[title.find('">') + len('">'):title.find('</a>')]
+
+        source = listItem[listItem.find('<span class="chap">') + len('<span class="chap">'):listItem.find(
+            '<span class="number">')]
+        source = source[source.find('href="') + len('href="'):source.find('" title="')]
+
+        author = listItem[listItem.find('<span class="author">') + len('<span class="author">'):listItem.find(
+            '<span class="time">')]
+        author = author[author.find('">') + len('">'):author.find('</a>')]
+
+        introduce = listItem[listItem.find('<span class="number">') + len('<span class="number">'):listItem.find(
+            '<span class="author">')]
+        introduce = re.search(r'\d+', introduce).group()
 
         # imgName = imgUrl[imgUrl.rfind("/") + 1:]
         # save_file('/Users/renminghe/Desktop/python爬虫/images/', imgName, get_file(imgUrl))
-        Stacks.objects.create(title=title, imgUrl=imgUrl, source=source, author=author, introduce=introduce, type="玄幻")
+        Stacks.objects.create(title=title, source=source, author=author, introduce=introduce, type="奇幻玄幻")
     return data

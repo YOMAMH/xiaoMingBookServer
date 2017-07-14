@@ -8,7 +8,7 @@ from stacks_category.models import StacksCategory
 
 
 urlpatterns = [
-    url(r'^all/(.+)/$', Stacks.stacksAll),
+    url(r'^all/(.+)/(.+)/$', Stacks.stacksAll),
     url(r'^create/(.+)/$', Stacks.creatStacks),
     url(r'^category/$', StacksCategory.categorys),
 ]
